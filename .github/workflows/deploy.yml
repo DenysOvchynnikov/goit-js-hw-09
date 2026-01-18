@@ -4,11 +4,8 @@ on:
   push:
     branches: [main]
 
-permissions:
-  contents: write
-
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,14 +17,23 @@ jobs:
           node-version: '18'
           cache: 'npm'
 
-      - name: Install and build
-        run: |
-          npm ci
-          npm run build
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3.9.3
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          force_orphan: true
+          name: github-pages
+          path: dist
+          retention-days: 1
+
+      - name: Deploy Pages
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
